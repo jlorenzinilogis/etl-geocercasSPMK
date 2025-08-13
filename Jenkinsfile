@@ -2,47 +2,31 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
+        stage('Preparar entorno') {
             steps {
-                git 'https://your-repo-url.git'
-            }
-        }
-
-        stage('Setup') {
-            steps {
-                script {
-                    // Set up Python environment
-                    sh 'python -m venv venv'
-                    sh '. venv/bin/activate'
-                    sh 'pip install -r requirements.txt'
+                dir('src') {
+                    // Instala dependencias si tienes requirements.txt
+                    script {
+                        if (fileExists('../requirements.txt')) {
+                            sh 'pip install -r ../requirements.txt'
+                        } else {
+                            sh 'pip install pandas sqlalchemy requests openpyxl'
+                        }
+                    }
                 }
             }
         }
-
-        stage('Test') {
+        stage('Ejecutar ETL') {
             steps {
-                script {
-                    // Run tests
-                    sh '. venv/bin/activate && pytest'
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                script {
-                    // Deployment steps
-                    sh 'echo "Deploying application..."'
-                    // Add your deployment commands here
+                dir('src') {
+                    sh 'python main.py'
                 }
             }
         }
     }
-
     post {
         always {
-            echo 'Cleaning up...'
-            sh 'rm -rf venv'
+            echo 'Pipeline finalizado.'
         }
     }
 }
