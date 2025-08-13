@@ -5,13 +5,14 @@ pipeline {
         stage('Preparar entorno') {
             steps {
                 dir('src') {
-                    // Instala dependencias si tienes requirements.txt
                     script {
-                        if (fileExists('../requirements.txt')) {
-                            sh 'pip install -r ../requirements.txt'
-                        } else {
-                            sh 'pip install pandas sqlalchemy requests openpyxl'
-                        }
+                        // Crea entorno virtual si no existe
+                        sh '''
+                        python3 -m venv ../venv
+                        . ../venv/bin/activate
+                        pip install --upgrade pip
+                        pip install -r ../requirements.txt
+                        '''
                     }
                 }
             }
@@ -19,7 +20,10 @@ pipeline {
         stage('Ejecutar ETL') {
             steps {
                 dir('src') {
-                    sh 'python main.py'
+                    sh '''
+                    . ../venv/bin/activate
+                    python main.py
+                    '''
                 }
             }
         }
