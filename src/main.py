@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine
+import os
 
 
 
@@ -16,7 +17,7 @@ def extract_report(df_plates, df_geocercas, desde, hasta):
     url = 'https://drivetech.pro/api/v1/get_geofences_events/'
 
     headers = {
-        'Authorization': 'Token 8f691c7ed4ff0cdfd38c4dceed3a1b6a691684d4',
+        'Authorization': f'Token {os.environ.get("DRIVETECH_API_TOKEN")}', 
         'Content-Type': 'application/json'}
     
     payload = {

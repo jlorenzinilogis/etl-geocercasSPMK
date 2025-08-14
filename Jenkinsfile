@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        DRIVETECH_API_TOKEN = credentials('drivetech_api_token')
+    }
+
     stages {
         stage('Preparar entorno') {
             steps {
