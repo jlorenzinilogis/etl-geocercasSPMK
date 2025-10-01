@@ -58,7 +58,7 @@ def transform_report(df_report):
     df_report = df_report.drop(columns = ["in","out","driver", "activeDispatches"])
 
     # Duración de segundo a horas.
-    df_report["duration"]= (df_report["duration"]/360).round(2)
+    df_report["duration"]= (df_report["duration"]/3600).round(2)
 
     # Convertir datatime en formato fecha.
     #df_report["datetime"] = pd.to_datetime(df_report["datetime"], format="mixed").dt.date
@@ -130,10 +130,10 @@ def main():
     
 
     df_report = extract_report(df_plates, df_geocercas, start_str, end_str)
-    #print(df_report.head(15))
-    df_report = transform_report(df_report)
     print(df_report.head(15))
-    load_report(df_report,"geofences")
+    #df_report = transform_report(df_report)
+    #print(df_report.head(15))
+    #load_report(df_report,"geofences")
 
 
     return 0
