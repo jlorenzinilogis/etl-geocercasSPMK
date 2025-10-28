@@ -131,9 +131,9 @@ def main():
 
     df_report = extract_report(df_plates, df_geocercas, start_str, end_str)
     print(df_report.head(15))
-    #df_report = transform_report(df_report)
+    df_report = transform_report(df_report)
     #print(df_report.head(15))
-    #load_report(df_report,"geofences")
+    load_report(df_report,"geofences")
 
 
     return 0
