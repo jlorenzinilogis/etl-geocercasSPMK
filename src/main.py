@@ -98,18 +98,42 @@ def load_report(
     rows_inserted = 0
     with engine.begin() as conn:
         for _, row in df.iterrows():
-            insert_stmt = insert(table).values(row.to_dict())
-            if update_on_conflict:
-                do_update_stmt = insert_stmt.on_conflict_do_update(
-                    index_elements=['geofence', 'datetime', 'patente'],
-                    set_={'duration': row['duration']}
+            # Preparar diccionario de valores sólo con columnas presentes en la tabla destino
+            row_dict = row.to_dict()
+            table_cols = {c.name for c in table.columns}
+            insert_values = {k: v for k, v in row_dict.items() if k in table_cols}
+
+            if not insert_values:
+                raise ValueError(
+                    f"No matching columns to insert for table '{table_name}'. "
+                    f"DataFrame columns: {list(row_dict.keys())}; table columns: {sorted(table_cols)}"
                 )
-                conn.execute(do_update_stmt)
+
+            insert_stmt = insert(table).values(**insert_values)
+
+            # Revisar que las columnas usadas para el conflicto existan en la tabla
+            desired_index = ['geofence', 'datetime', 'patente']
+            index_elements = [c for c in desired_index if c in table_cols]
+
+            if index_elements:
+                if update_on_conflict:
+                    # Sólo actualizar columnas que existan en la tabla (y que no formen parte del índice)
+                    update_cols = {k: v for k, v in insert_values.items() if k not in index_elements}
+                    if not update_cols:
+                        # Si no hay columnas para actualizar, usar on_conflict_do_nothing
+                        do_stmt = insert_stmt.on_conflict_do_nothing(index_elements=index_elements)
+                    else:
+                        do_stmt = insert_stmt.on_conflict_do_update(
+                            index_elements=index_elements,
+                            set_=update_cols,
+                        )
+                    conn.execute(do_stmt)
+                else:
+                    do_nothing_stmt = insert_stmt.on_conflict_do_nothing(index_elements=index_elements)
+                    conn.execute(do_nothing_stmt)
             else:
-                do_nothing_stmt = insert_stmt.on_conflict_do_nothing(
-                    index_elements=['geofence', 'datetime', 'patente']
-                )
-                conn.execute(do_nothing_stmt)
+                # No hay índices de conflicto conocidos en la tabla, insertar normalmente
+                conn.execute(insert_stmt)
             rows_inserted += 1
 
     return rows_inserted
